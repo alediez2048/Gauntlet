@@ -1,0 +1,20 @@
+{
+  "name": "gauntlet",
+  "version": "1.0.0",
+  "description": "A Metroidvania Work Sample for the Gauntlet Program",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.21"
+  }
+}
