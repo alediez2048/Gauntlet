@@ -340,16 +340,16 @@ export default class BootScene extends Phaser.Scene {
     playerWithGauntlet.fillStyle(0xffee44, 1);
     playerWithGauntlet.fillRect(30, 20, 8, 12);
 
-    // Energy gems on gauntlet
-    playerWithGauntlet.fillStyle(0x00ffff, 1);
-    playerWithGauntlet.fillCircle(34, 23, 3);
-    playerWithGauntlet.fillStyle(0x88ffff, 0.8);
-    playerWithGauntlet.fillCircle(33, 22, 1);
-
-    playerWithGauntlet.fillStyle(0xff00ff, 1);
-    playerWithGauntlet.fillCircle(34, 29, 2);
-    playerWithGauntlet.fillStyle(0xff88ff, 0.8);
-    playerWithGauntlet.fillCircle(33, 28, 1);
+    // Energy gems on gauntlet - REMOVED so they can be added dynamically
+    // playerWithGauntlet.fillStyle(0x00ffff, 1);
+    // playerWithGauntlet.fillCircle(34, 23, 3);
+    // playerWithGauntlet.fillStyle(0x88ffff, 0.8);
+    // playerWithGauntlet.fillCircle(33, 22, 1);
+    //
+    // playerWithGauntlet.fillStyle(0xff00ff, 1);
+    // playerWithGauntlet.fillCircle(34, 29, 2);
+    // playerWithGauntlet.fillStyle(0xff88ff, 0.8);
+    // playerWithGauntlet.fillCircle(33, 28, 1);
 
     // Gauntlet glow effect
     playerWithGauntlet.fillStyle(0xffaa00, 0.3);

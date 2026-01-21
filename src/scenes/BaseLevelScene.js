@@ -33,7 +33,7 @@ export default class BaseLevelScene extends Phaser.Scene {
     this.createParallaxBackground();
 
     // CRT/Monitor effect overlay (adds that "viewing through security camera" feel)
-    this.createCRTEffect();
+    // this.createCRTEffect();
 
     // Gem system - restore previous gems
     this.gemSystem = new GemSystem(this);
@@ -234,13 +234,13 @@ export default class BaseLevelScene extends Phaser.Scene {
     lighting.setScrollFactor(0);
     lighting.setDepth(1000);
 
-    // Vignette
-    lighting.fillStyle(0x000000, 0.4);
-    lighting.fillRect(0, 0, 50, 600);
-    lighting.fillRect(750, 0, 50, 600);
-    lighting.fillStyle(0x000000, 0.3);
-    lighting.fillRect(0, 0, 800, 30);
-    lighting.fillRect(0, 570, 800, 30);
+    // Vignette removed as per user request
+    // lighting.fillStyle(0x000000, 0.4);
+    // lighting.fillRect(0, 0, 50, 600);
+    // lighting.fillRect(750, 0, 50, 600);
+    // lighting.fillStyle(0x000000, 0.3);
+    // lighting.fillRect(0, 0, 800, 30);
+    // lighting.fillRect(0, 570, 800, 30);
 
     // Add corporate propaganda posters
     this.createPropagandaPosters(width, height, theme);
@@ -1426,7 +1426,7 @@ export default class BaseLevelScene extends Phaser.Scene {
     controlsBg.fillStyle(0x000000, 0.6);
     controlsBg.fillRect(0, 575, 800, 25);
 
-    this.add.text(400, 587, 'A/D: Move | SPACE: Jump | J: Attack | L: Gem Power | R: Respawn', {
+    this.add.text(400, 587, 'A/D: Move | SPACE: Jump | J: Attack | L/K/SHIFT: Powers | R: Respawn', {
       font: '10px monospace',
       fill: '#445566'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(1000);
@@ -1651,14 +1651,36 @@ export default class BaseLevelScene extends Phaser.Scene {
     this.gemSystem.update(delta);
 
     // Cooldown display
-    if (this.gemSystem.hasGem('inference') && this.abilityText) {
-      const cooldown = this.gemSystem.getCooldownPercent('inference');
-      if (cooldown > 0) {
-        this.abilityText.setText(`L: Inference (${Math.ceil(cooldown * 5)}s)`);
+    if (this.abilityText) {
+      const texts = [];
+      const gems = this.gemSystem.getCollectedGems();
+
+      if (gems.length === 0) {
+        this.abilityText.setText('[No Gem]');
         this.abilityText.setColor('#666666');
-      } else if (!this.gemSystem.isAbilityActive('inference')) {
-        this.abilityText.setText('L: Inference [Ready]');
-        this.abilityText.setColor('#00ffff');
+      } else {
+        // Sort gems by ability key for consistent display
+        gems.forEach(gem => {
+          const cooldown = this.gemSystem.getCooldownPercent(gem.id);
+          const key = gem.abilityKey;
+          let status = '[Ready]';
+          let color = '#ffffff';
+
+          if (cooldown > 0) {
+            status = `(${Math.ceil(cooldown * (gem.cooldown / 1000))}s)`;
+            color = '#666666';
+          } else if (this.gemSystem.isAbilityActive(gem.id)) {
+            status = 'ACTIVE';
+            color = '#00ffff';
+          } else {
+            color = '#' + gem.color.toString(16).padStart(6, '0');
+          }
+
+          texts.push(`${key}: ${gem.name} ${status}`);
+        });
+
+        this.abilityText.setText(texts.join('\n'));
+        this.abilityText.setColor('#ffffff'); // Individual line colors not supported in simple Text, but that's fine.
       }
     }
 

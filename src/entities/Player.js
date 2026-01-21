@@ -98,6 +98,77 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.handleAttack();
     this.updateAttackHitbox();
     this.updateAbilities();
+    this.updateGauntletVisuals();
+  }
+
+  updateGauntletVisuals() {
+    // Initialize graphics if not exists
+    if (!this.gemGraphics) {
+      this.gemGraphics = this.scene.add.graphics();
+      this.gemGraphics.setDepth(this.depth + 1);
+    }
+
+    this.gemGraphics.clear();
+
+    // Only draw if player has gauntlet
+    if (!this.hasGauntlet) return;
+
+    // Sync position with player
+    // Player sprite origin is 0.5, 0.5. Texture size is 42x56.
+    // When facing right (flipX=false), gauntlet is on the right side.
+    // When facing left (flipX=true), gauntlet is on the left side.
+
+    const gems = this.scene.gemSystem ? this.scene.gemSystem.getCollectedGems() : [];
+    if (gems.length === 0) return;
+
+    // Calculate offsets based on direction
+    // Original texture gem positions: (34, 23) and (34, 29) within 42x56 frame
+    // Relative to center (21, 28): x + 13, y - 5 (top gem), y + 1 (bottom gem)
+
+    const centerX = this.x;
+    const centerY = this.y;
+    const dir = this.flipX ? -1 : 1;
+
+    // Adjust positions based on animation/flip
+    // We'll use a simplified positioning for now that looks "good enough" attached to the player center
+    const offsetX = 13 * dir;
+    const topGemY = -5;
+    const botGemY = 1;
+
+    // Draw gems
+    gems.forEach((gem, index) => {
+      // Determine position for this gem (stack them or specific slots?)
+      // Texture had 2 explicit slots. We can stack them or use specific slots for specific gems.
+      // Let's use specific slots based on gem type for consistency with the design
+
+      let gx = centerX + offsetX;
+      let gy = centerY + topGemY;
+
+      // Assign slots: 
+      // Inference (Cyan) -> Top
+      // Training (Magenta) -> Bottom
+      // Others -> surrounding
+
+      if (gem.id === 'inference') {
+        gy = centerY + topGemY;
+      } else if (gem.id === 'training') {
+        gy = centerY + botGemY;
+      } else if (gem.id === 'optimization') {
+        gx = centerX + (8 * dir); // Slightly inner
+        gy = centerY + botGemY + 6;
+      } else if (gem.id === 'generalization') {
+        gx = centerX + (16 * dir); // Outer
+        gy = centerY + topGemY + 3;
+      } else {
+        gx = centerX + (13 * dir);
+        gy = centerY - 10;
+      }
+
+      this.gemGraphics.fillStyle(gem.color, 1);
+      this.gemGraphics.fillCircle(gx, gy, 2);
+      this.gemGraphics.fillStyle(0xffffff, 0.5); // Shine
+      this.gemGraphics.fillCircle(gx - 1, gy - 1, 1);
+    });
   }
 
   spawnLandingParticles() {
@@ -161,7 +232,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   handleJump() {
     const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
-                        Phaser.Input.Keyboard.JustDown(this.keys.jump);
+      Phaser.Input.Keyboard.JustDown(this.keys.jump);
     const onGround = this.body.blocked.down || this.body.touching.down;
 
     if (onGround) {
