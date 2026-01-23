@@ -1,5 +1,7 @@
 # Gauntlet
 
+**Play now:** https://alediez2048.github.io/Gauntlet/
+
 A Metroidvania Work Sample for the Gauntlet Program
 
 ## Overview
