@@ -411,4 +411,37 @@ export default class Level2Scene extends BaseLevelScene {
     // Keycard collected - allow exit (don't set levelComplete here, handleLevelComplete does it)
     this.handleLevelComplete();
   }
+
+  // Override respawn to reset Level 2 specific states
+  respawnPlayer() {
+    // Call parent respawn first
+    super.respawnPlayer();
+
+    // Reset Level 2 specific states
+    this.managerKillsWithPower = 0;
+    this.totalManagers = this.countMiddleManagers();
+    this.hasKeycard = false;
+    this.keycardCollected = false;
+    this.exitHintShown = false;
+
+    // Destroy existing keycard if any
+    if (this.keycard) {
+      this.keycard.destroy();
+      this.keycard = null;
+    }
+
+    // Destroy existing barrier and recreate
+    if (this.exitBarrier) {
+      this.exitBarrier.destroy();
+      this.exitBarrier = null;
+    }
+    this.createExitBarrier();
+
+    // Reset exit visuals to locked state
+    this.exitLabel.setText('EXIT\n[LOCKED]');
+    this.exitLabel.setColor('#ff4444');
+    if (this.exitGlow) {
+      this.exitGlow.setFillStyle(0xff0000, 0.5);
+    }
+  }
 }

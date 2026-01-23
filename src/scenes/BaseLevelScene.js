@@ -2166,11 +2166,34 @@ export default class BaseLevelScene extends Phaser.Scene {
   }
 
   respawnPlayer() {
+    // CRITICAL: Reset all scene states first
+    this.isPaused = false;
+    this.levelComplete = false;
+    this.levelTransitioning = false;
+    this.transitioningToNextLevel = false;
+
+    // Reset time and physics (in case paused or slowed)
+    this.time.timeScale = 1;
+    this.time.paused = false;
+    this.physics.resume();
+
+    // Re-enable input in case it was disabled
+    this.input.enabled = true;
+
+    // Destroy pause menu if exists
+    if (this.pauseContainer) {
+      this.pauseContainer.destroy();
+      this.pauseContainer = null;
+    }
+
+    // Respawn player
     this.player.respawn(this.spawnPoint.x, this.spawnPoint.y);
 
     // Reset hit streak
     this.player.hitStreak = 0;
-    this.updateTrainingDisplay();
+    if (this.updateTrainingDisplay) {
+      this.updateTrainingDisplay();
+    }
 
     // Show respawn message
     this.showRespawnMessage();
@@ -2193,6 +2216,15 @@ export default class BaseLevelScene extends Phaser.Scene {
       this.player,
       this.enemies,
       this.handleEnemyContact,
+      null,
+      this
+    );
+
+    // Re-setup projectile collision
+    this.physics.add.overlap(
+      this.player,
+      this.projectiles,
+      this.handleProjectileHit,
       null,
       this
     );

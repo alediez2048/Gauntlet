@@ -1557,6 +1557,27 @@ export default class Level1Scene extends Phaser.Scene {
   }
 
   respawnPlayer() {
+    // CRITICAL: Reset all scene states first
+    this.isPaused = false;
+    this.levelComplete = false;
+    this.levelTransitioning = false;
+    this.transitioningToNextLevel = false;
+
+    // Reset time and physics (in case paused or slowed)
+    this.time.timeScale = 1;
+    this.time.paused = false;
+    this.physics.resume();
+
+    // Re-enable input in case it was disabled
+    this.input.enabled = true;
+
+    // Destroy pause menu if exists
+    if (this.pauseContainer) {
+      this.pauseContainer.destroy();
+      this.pauseContainer = null;
+    }
+
+    // Respawn player
     this.player.respawn(this.spawnPoint.x, this.spawnPoint.y);
 
     // Show respawn message
@@ -1587,6 +1608,28 @@ export default class Level1Scene extends Phaser.Scene {
     }
 
     this.setupCollisions();
+
+    // Reset blockade state - recreate if gem not collected
+    if (!this.gemSystem.hasGem('inference')) {
+      // Clean up existing blockade
+      if (this.blockadeGlitchTimer) {
+        this.blockadeGlitchTimer.remove();
+        this.blockadeGlitchTimer = null;
+      }
+      if (this.blockade) {
+        this.tweens.killTweensOf(this.blockade);
+        this.blockade.destroy();
+        this.blockade = null;
+      }
+      this.blockadeGlitches = [];
+      this.blockadeActive = false;
+
+      // Blockade will be recreated when exit is recreated
+      // For now, just reset the state
+    }
+
+    // Reset exit hint shown flag
+    this.exitHintShown = false;
 
     this.updateHUD();
   }
