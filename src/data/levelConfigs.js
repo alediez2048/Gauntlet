@@ -74,7 +74,6 @@ export const LEVEL_CONFIGS = {
       { type: 'drone', x: 200, y: 500, patrolLeft: 50, patrolRight: 280 },
       { type: 'manager', x: 500, y: 500, patrolLeft: 400, patrolRight: 580 },
       { type: 'drone', x: 800, y: 500, patrolLeft: 700, patrolRight: 950 },
-      { type: 'manager', x: 620, y: 310, patrolLeft: 580, patrolRight: 680 },
       { type: 'drone', x: 1200, y: 500, patrolLeft: 1150, patrolRight: 1350 },
       { type: 'drone', x: 1250, y: 160, patrolLeft: 1180, patrolRight: 1350 },
       { type: 'manager', x: 1600, y: 500, patrolLeft: 1550, patrolRight: 1700 },
