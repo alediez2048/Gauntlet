@@ -11,11 +11,12 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
     this.body.setSize(30, 44);
     this.body.setOffset(8, 14);
 
-    // Stats - ranged enemy
+    // Stats - ranged enemy (2 hits to kill when frozen)
     this.maxHealth = 2;
     this.health = this.maxHealth;
     this.isAlive = true;
     this.damage = 1;
+    this.isFrozen = false;
 
     // Movement - stays at range
     this.moveSpeed = 40;
@@ -64,6 +65,12 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
   }
 
   updateState() {
+    // Don't update state while frozen
+    if (this.isFrozen) {
+      this.state = 'frozen';
+      return;
+    }
+
     if (!this.target || !this.target.isAlive) {
       this.state = 'patrol';
       return;
@@ -99,6 +106,12 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
   }
 
   executeState() {
+    // Don't execute movement when frozen
+    if (this.isFrozen) {
+      this.setVelocityX(0);
+      return;
+    }
+
     switch (this.state) {
       case 'patrol':
         this.patrol();
@@ -267,9 +280,15 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
   takeDamage(amount, knockbackDirection = 0) {
     if (!this.isAlive) return;
 
-    this.health -= amount;
-    this.setVelocityX(knockbackDirection * 120);
-    this.setVelocityY(-80);
+    // Frozen enemies take guaranteed 1 damage minimum per hit
+    const actualDamage = this.isFrozen ? Math.max(amount, 1) : amount;
+    this.health -= actualDamage;
+
+    // Less knockback if frozen
+    if (!this.isFrozen) {
+      this.setVelocityX(knockbackDirection * 120);
+      this.setVelocityY(-80);
+    }
 
     this.flashDamage();
 
@@ -284,6 +303,35 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
     if (this.health <= 0) {
       this.die();
     }
+  }
+
+  freeze(duration) {
+    if (!this.isAlive) return;
+
+    this.isFrozen = true;
+    this.setVelocityX(0);
+    this.setVelocityY(0);
+    this.setTint(0x88ffff);
+
+    // Cancel any attack in progress
+    this.isAttacking = false;
+    this.isTelegraphing = false;
+    if (this.aimLine) {
+      this.aimLine.destroy();
+      this.aimLine = null;
+    }
+
+    // Unfreeze after duration
+    if (this.freezeTimer) {
+      this.freezeTimer.destroy();
+    }
+
+    this.freezeTimer = this.scene.time.delayedCall(duration, () => {
+      if (this.isAlive && this.scene) {
+        this.isFrozen = false;
+        this.clearTint();
+      }
+    });
   }
 
   flashDamage() {
@@ -446,6 +494,7 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
       approach: 'MICROMANAGING',
       retreat: 'DELEGATING',
       attack: 'PERFORMANCE REVIEW',
+      frozen: 'ON HOLD',
       dead: 'LAID OFF'
     };
     this.stateIndicator.setText(labels[this.state] || this.state.toUpperCase());
@@ -455,6 +504,7 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
       approach: '#ffff88',
       retreat: '#88ffff',
       attack: '#ff88ff',
+      frozen: '#88ffff',
       dead: '#888888'
     };
     this.stateIndicator.setColor(colors[this.state] || '#ffffff');

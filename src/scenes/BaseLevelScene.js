@@ -1559,15 +1559,28 @@ export default class BaseLevelScene extends Phaser.Scene {
       const distance = Phaser.Math.Distance.Between(playerX, playerY, enemy.x, enemy.y);
 
       if (distance <= range) {
-        // Freeze this enemy
-        enemy.isFrozen = true;
-        enemy.frozenVelocityX = enemy.body.velocity.x;
-        enemy.frozenVelocityY = enemy.body.velocity.y;
-        enemy.setVelocity(0, 0);
-        if (enemy.body) enemy.body.moves = false;
+        // Use enemy's freeze method if available (MiddleManager has one)
+        if (typeof enemy.freeze === 'function') {
+          enemy.freeze(duration);
+        } else {
+          // Generic freeze for other enemies
+          enemy.isFrozen = true;
+          enemy.frozenVelocityX = enemy.body.velocity.x;
+          enemy.frozenVelocityY = enemy.body.velocity.y;
+          enemy.setVelocity(0, 0);
 
-        // Visual freeze effect - cyan tint and ice particles
-        enemy.setTint(0x88ffff);
+          // Visual freeze effect - cyan tint
+          enemy.setTint(0x88ffff);
+
+          // Unfreeze after duration
+          this.time.delayedCall(duration, () => {
+            if (enemy && enemy.active && enemy.isFrozen) {
+              enemy.isFrozen = false;
+              enemy.clearTint();
+              this.createUnfreezeEffect(enemy);
+            }
+          });
+        }
 
         // Create ice crystal effect around enemy
         this.createFreezeEffect(enemy);
@@ -1586,18 +1599,6 @@ export default class BaseLevelScene extends Phaser.Scene {
           alpha: 0,
           duration: 1000,
           onComplete: () => frozenText.destroy()
-        });
-
-        // Unfreeze after duration
-        this.time.delayedCall(duration, () => {
-          if (enemy && enemy.active && enemy.isFrozen) {
-            enemy.isFrozen = false;
-            if (enemy.body) enemy.body.moves = true;
-            enemy.clearTint();
-
-            // Shatter effect when unfreezing
-            this.createUnfreezeEffect(enemy);
-          }
         });
       }
     });

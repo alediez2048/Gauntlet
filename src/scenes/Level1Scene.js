@@ -1000,10 +1000,23 @@ export default class Level1Scene extends Phaser.Scene {
       const distance = Phaser.Math.Distance.Between(playerX, playerY, enemy.x, enemy.y);
 
       if (distance <= range) {
-        enemy.isFrozen = true;
-        enemy.setVelocity(0, 0);
-        if (enemy.body) enemy.body.moves = false;
-        enemy.setTint(0x88ffff);
+        // Use enemy's freeze method if available (MiddleManager has one)
+        if (typeof enemy.freeze === 'function') {
+          enemy.freeze(duration);
+        } else {
+          // Generic freeze for other enemies
+          enemy.isFrozen = true;
+          enemy.setVelocity(0, 0);
+          enemy.setTint(0x88ffff);
+
+          this.time.delayedCall(duration, () => {
+            if (enemy && enemy.active && enemy.isFrozen) {
+              enemy.isFrozen = false;
+              enemy.clearTint();
+              this.createUnfreezeEffect(enemy);
+            }
+          });
+        }
 
         this.createFreezeEffect(enemy);
 
@@ -1020,15 +1033,6 @@ export default class Level1Scene extends Phaser.Scene {
           alpha: 0,
           duration: 1000,
           onComplete: () => frozenText.destroy()
-        });
-
-        this.time.delayedCall(duration, () => {
-          if (enemy && enemy.active && enemy.isFrozen) {
-            enemy.isFrozen = false;
-            if (enemy.body) enemy.body.moves = true;
-            enemy.clearTint();
-            this.createUnfreezeEffect(enemy);
-          }
         });
       }
     });
