@@ -1145,6 +1145,138 @@ export default class Level1Scene extends Phaser.Scene {
     this.cameras.main.flash(100, 136, 255, 255);
   }
 
+  // ========== HEART PICKUP SYSTEM ==========
+
+  spawnHeartPickup(x, y) {
+    const heart = this.add.container(x, y - 10);
+
+    const glow = this.add.circle(0, 0, 18, 0xff4444, 0.4);
+    heart.add(glow);
+
+    const heartGraphics = this.add.graphics();
+    heartGraphics.fillStyle(0xff2222, 1);
+    heartGraphics.fillCircle(-5, -3, 7);
+    heartGraphics.fillCircle(5, -3, 7);
+    heartGraphics.fillTriangle(-12, 0, 12, 0, 0, 14);
+    heartGraphics.fillRect(-5, -3, 10, 8);
+    heart.add(heartGraphics);
+
+    const shine = this.add.circle(-3, -5, 3, 0xffffff, 0.7);
+    heart.add(shine);
+
+    const plus = this.add.text(0, -25, '+1', {
+      font: 'bold 10px monospace',
+      fill: '#ff4444'
+    }).setOrigin(0.5);
+    heart.add(plus);
+
+    this.physics.add.existing(heart);
+    heart.body.setSize(30, 30);
+    heart.body.setAllowGravity(false);
+
+    this.tweens.add({
+      targets: heart,
+      y: y - 30,
+      duration: 300,
+      ease: 'Power2'
+    });
+
+    this.tweens.add({
+      targets: heart,
+      y: y - 40,
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+      delay: 300
+    });
+
+    this.tweens.add({
+      targets: glow,
+      alpha: 0.2,
+      scale: 1.3,
+      duration: 500,
+      yoyo: true,
+      repeat: -1
+    });
+
+    this.physics.add.overlap(
+      this.player,
+      heart,
+      () => this.collectHeart(heart),
+      null,
+      this
+    );
+
+    this.time.delayedCall(10000, () => {
+      if (heart && heart.active) {
+        this.tweens.add({
+          targets: heart,
+          alpha: 0,
+          scale: 0.5,
+          duration: 300,
+          onComplete: () => heart.destroy()
+        });
+      }
+    });
+  }
+
+  collectHeart(heart) {
+    if (!heart || !heart.active) return;
+
+    if (this.player.health < this.player.maxHealth) {
+      this.player.health = Math.min(this.player.health + 1, this.player.maxHealth);
+
+      if (this.updateHealthDisplay) {
+        this.updateHealthDisplay();
+      }
+
+      this.cameras.main.flash(100, 255, 100, 100);
+
+      const healText = this.add.text(this.player.x, this.player.y - 40, '+1 HP', {
+        font: 'bold 16px monospace',
+        fill: '#00ff00',
+        stroke: '#003300',
+        strokeThickness: 3
+      }).setOrigin(0.5);
+
+      this.tweens.add({
+        targets: healText,
+        y: healText.y - 40,
+        alpha: 0,
+        duration: 800,
+        onComplete: () => healText.destroy()
+      });
+
+      for (let i = 0; i < 10; i++) {
+        const particle = this.add.circle(
+          this.player.x + Phaser.Math.Between(-20, 20),
+          this.player.y + Phaser.Math.Between(-20, 20),
+          Phaser.Math.Between(2, 5),
+          0x00ff00,
+          0.8
+        );
+
+        this.tweens.add({
+          targets: particle,
+          y: particle.y - 30,
+          alpha: 0,
+          duration: 500,
+          delay: i * 30,
+          onComplete: () => particle.destroy()
+        });
+      }
+    }
+
+    this.tweens.add({
+      targets: heart,
+      scale: 1.5,
+      alpha: 0,
+      duration: 200,
+      onComplete: () => heart.destroy()
+    });
+  }
+
   activateInferenceVision() {
     // Visual effect - cyan overlay for inference vision
     this.inferenceOverlay = this.add.rectangle(
