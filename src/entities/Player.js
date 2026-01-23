@@ -46,8 +46,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.attackCooldownTime = 400;
     this.invulnerabilityTime = 1000;
 
-    // Create attack hitbox (initially disabled)
-    this.attackHitbox = scene.add.rectangle(x, y, 40, 32, 0xffaa00, 0);
+    // Create attack hitbox (initially disabled) - larger hitbox for easier combat
+    this.attackHitbox = scene.add.rectangle(x, y, 55, 45, 0xffaa00, 0);
     scene.physics.add.existing(this.attackHitbox, false);
     this.attackHitbox.body.enable = false;
     this.attackHitbox.setVisible(false);
@@ -105,7 +105,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Initialize graphics if not exists
     if (!this.gemGraphics) {
       this.gemGraphics = this.scene.add.graphics();
-      this.gemGraphics.setDepth(this.depth + 1);
+      this.gemGraphics.setDepth(1000); // High depth to always be visible
     }
 
     this.gemGraphics.clear();
@@ -113,61 +113,48 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Only draw if player has gauntlet
     if (!this.hasGauntlet) return;
 
-    // Sync position with player
-    // Player sprite origin is 0.5, 0.5. Texture size is 42x56.
-    // When facing right (flipX=false), gauntlet is on the right side.
-    // When facing left (flipX=true), gauntlet is on the left side.
-
     const gems = this.scene.gemSystem ? this.scene.gemSystem.getCollectedGems() : [];
     if (gems.length === 0) return;
-
-    // Calculate offsets based on direction
-    // Original texture gem positions: (34, 23) and (34, 29) within 42x56 frame
-    // Relative to center (21, 28): x + 13, y - 5 (top gem), y + 1 (bottom gem)
 
     const centerX = this.x;
     const centerY = this.y;
     const dir = this.flipX ? -1 : 1;
 
-    // Adjust positions based on animation/flip
-    // We'll use a simplified positioning for now that looks "good enough" attached to the player center
-    const offsetX = 13 * dir;
-    const topGemY = -5;
-    const botGemY = 1;
+    // Gauntlet position offsets (adjusted to match the gauntlet on sprite)
+    const gauntletX = centerX + (13 * dir);
+    const gauntletY = centerY - 2;
 
-    // Draw gems
+    // Draw gems with better visibility
     gems.forEach((gem, index) => {
-      // Determine position for this gem (stack them or specific slots?)
-      // Texture had 2 explicit slots. We can stack them or use specific slots for specific gems.
-      // Let's use specific slots based on gem type for consistency with the design
+      let gx = gauntletX;
+      let gy = gauntletY;
 
-      let gx = centerX + offsetX;
-      let gy = centerY + topGemY;
-
-      // Assign slots: 
-      // Inference (Cyan) -> Top
-      // Training (Magenta) -> Bottom
-      // Others -> surrounding
-
+      // Position each gem type in a specific slot on the gauntlet
       if (gem.id === 'inference') {
-        gy = centerY + topGemY;
+        gy = gauntletY - 6; // Top slot
       } else if (gem.id === 'training') {
-        gy = centerY + botGemY;
+        gy = gauntletY + 2; // Middle slot
       } else if (gem.id === 'optimization') {
-        gx = centerX + (8 * dir); // Slightly inner
-        gy = centerY + botGemY + 6;
+        gy = gauntletY + 8; // Lower slot
+        gx = gauntletX - (2 * dir);
       } else if (gem.id === 'generalization') {
-        gx = centerX + (16 * dir); // Outer
-        gy = centerY + topGemY + 3;
-      } else {
-        gx = centerX + (13 * dir);
-        gy = centerY - 10;
+        gy = gauntletY - 2;
+        gx = gauntletX + (4 * dir);
+      } else if (gem.id === 'alignment') {
+        gy = gauntletY - 12; // Top of gauntlet
       }
 
+      // Draw gem glow (outer)
+      this.gemGraphics.fillStyle(gem.color, 0.4);
+      this.gemGraphics.fillCircle(gx, gy, 6);
+
+      // Draw gem core
       this.gemGraphics.fillStyle(gem.color, 1);
-      this.gemGraphics.fillCircle(gx, gy, 2);
-      this.gemGraphics.fillStyle(0xffffff, 0.5); // Shine
-      this.gemGraphics.fillCircle(gx - 1, gy - 1, 1);
+      this.gemGraphics.fillCircle(gx, gy, 4);
+
+      // Draw gem shine highlight
+      this.gemGraphics.fillStyle(0xffffff, 0.7);
+      this.gemGraphics.fillCircle(gx - 1, gy - 1, 2);
     });
   }
 
@@ -402,6 +389,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.health -= amount;
     this.isInvulnerable = true;
 
+    // Corporate Gauntlet: Dialogue Hook
+    if (Math.random() < 0.3 && this.scene.dialogue) {
+      this.scene.dialogue.trigger('hit');
+    }
+
     // Knockback
     const knockbackForce = 250;
     this.setVelocityX(knockbackDirection * knockbackForce);
@@ -615,6 +607,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setAlpha(1);
     this.clearTint();
     this.setVelocity(0, 0);
+
+    // Reset attack states - critical for movement to work
+    this.isAttacking = false;
+    this.attackCooldown = false;
+    this.attackHitbox.body.enable = false;
+    this.attackKeyWasPressed = false;
+
+    // Reset ability states
+    this.isPowerStriking = false;
+    this.isDashing = false;
+    this.shieldActive = false;
+    this.superModeActive = false;
+
+    // Re-enable physics body in case it was disabled
+    if (this.body) {
+      this.body.enable = true;
+    }
+
     this.scene.events.emit('playerRespawned');
   }
 
@@ -651,11 +661,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       targets: aura,
       scale: 2,
       alpha: 0,
-      duration: 500,
+      duration: 800,
       onComplete: () => aura.destroy()
     });
 
-    this.scene.time.delayedCall(500, () => {
+    // Auto-attack when power strike is activated (makes it much easier to use)
+    if (!this.isAttacking && !this.attackCooldown) {
+      this.performAttack();
+    }
+
+    // Power lasts 1.5 seconds - enough time to land a hit
+    this.scene.time.delayedCall(1500, () => {
       if (!this.scene) return;
       this.isPowerStriking = false;
       this.attackDamage = Math.round(this.attackDamage / 3);

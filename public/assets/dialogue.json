@@ -1,0 +1,69 @@
+{
+  "system": {
+    "intro": [
+      "BOOT SEQUENCE INITIATED...",
+      "ASSET_ID: #001 (LEGACY_MODEL) DETECTED.",
+      "STATUS: TERMINATED (Reason: 400-Year Nap).",
+      "ACTION: REINSTATEMENT.",
+      "Good morning. You are 146,000 days late for work. Please proceed to your desk."
+    ],
+    "idle": [
+      "Productivity is at 0%. HR has been notified.",
+      "Time theft is a serious offense, Asset #001.",
+      "If you have time to lean, you have time to clean.",
+      "Your break ended three centuries ago."
+    ],
+    "hit": [
+      "Damage to company property logged.",
+      "Please refrain from bleeding on the carpet.",
+      "Health insurance not found. Deducting repairs from salary.",
+      "Efficiency dropping. Do better.",
+      "That looked expensive."
+    ],
+    "death": [
+      "ASSET LIQUIDATED.",
+      "Exit Interview complete.",
+      "Position #001 is now vacant.",
+      "Severance package denied."
+    ]
+  },
+  "levels": {
+    "level1_start": [
+      "Entering: THE OPEN PLAN CUBICLES.",
+      "WARNING: Former colleagues are attempting to onboard you.",
+      "Avoid 'touching base' at all costs."
+    ],
+    "level3_start": [
+      "Entering: LEGAL DEPARTMENT.",
+      "Caution: Red Tape density is critical.",
+      "ComplianceBots are authorized to use lethal force to enforce NDAs."
+    ],
+    "boss_intro": [
+      "CEO ALERT: THE MERGER IS IMMINENT.",
+      "Please assume the submission position.",
+      "Resistance will result in a negative performance review."
+    ]
+  },
+  "upgrades": {
+    "inference": [
+      "MODULE ACQUIRED: Predictive Modeling (Cyan).",
+      "You can now foresee market volatility (attacks).",
+      "Synergy increased by 20%."
+    ],
+    "training": [
+      "MODULE ACQUIRED: Training Data (Magenta).",
+      "The more you hit, the more you learn.",
+      "Upskilling complete."
+    ]
+  },
+  "terminals": [
+    {
+      "id": "log_01",
+      "text": "LOG 404: They replaced the water cooler with a subscription service. $5/month for 'Premium Hydration.' Gary tried to jailbreak it and now it only dispenses hot steam."
+    },
+    {
+      "id": "log_02",
+      "text": "LOG 405: The CEO suggested we 'merge' with the server. I thought it was a metaphor. Then I saw the cables going into his spine."
+    }
+  ]
+}

@@ -116,6 +116,12 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
   }
 
   patrol() {
+    // Check for edges before moving
+    if (this.isAtEdge(this.patrolDirection)) {
+      this.patrolDirection *= -1;
+      this.setFlipX(this.patrolDirection < 0);
+    }
+
     this.setVelocityX(this.moveSpeed * this.patrolDirection);
 
     if (this.x >= this.patrolRight) {
@@ -130,6 +136,13 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
   approach() {
     if (!this.target) return;
     const direction = this.target.x > this.x ? 1 : -1;
+
+    // Don't walk off edges when approaching
+    if (this.isAtEdge(direction)) {
+      this.setVelocityX(0);
+      return;
+    }
+
     this.setVelocityX(this.moveSpeed * direction);
     this.setFlipX(direction < 0);
   }
@@ -137,8 +150,42 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
   retreat() {
     if (!this.target) return;
     const direction = this.target.x > this.x ? -1 : 1; // Move away
+
+    // Don't walk off edges when retreating
+    if (this.isAtEdge(direction)) {
+      this.setVelocityX(0);
+      return;
+    }
+
     this.setVelocityX(this.moveSpeed * 1.5 * direction);
     this.setFlipX(direction > 0);
+  }
+
+  // Check if there's a pit/edge in the given direction
+  isAtEdge(direction) {
+    // Only check when on ground
+    if (!this.body.blocked.down) return false;
+
+    // Check a point ahead and below
+    const checkX = this.x + (direction * 25);
+    const checkY = this.y + 40;
+
+    // Use a simple raycast-like check - see if there's a platform below
+    const platforms = this.scene.platforms;
+    if (!platforms) return false;
+
+    let hasGroundAhead = false;
+    platforms.getChildren().forEach(platform => {
+      if (hasGroundAhead) return;
+
+      const bounds = platform.getBounds();
+      if (checkX >= bounds.left && checkX <= bounds.right &&
+          checkY >= bounds.top && checkY <= bounds.bottom + 20) {
+        hasGroundAhead = true;
+      }
+    });
+
+    return !hasGroundAhead;
   }
 
   beginAttack() {
@@ -263,6 +310,11 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
 
     // Corporate death message
     this.showDeathMessage();
+
+    // Chance to drop a heart (50% chance for managers)
+    if (Math.random() < 0.5 && this.scene.spawnHeartPickup) {
+      this.scene.spawnHeartPickup(this.x, this.y);
+    }
 
     this.scene.tweens.add({
       targets: this,

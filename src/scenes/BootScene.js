@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import CRTPipeline from '../pipelines/CRTPipeline';
 
 export default class BootScene extends Phaser.Scene {
   constructor() {
@@ -6,6 +7,12 @@ export default class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    // Load dialogue data
+    this.load.json('dialogue', 'assets/dialogue.json');
+
+    // Load background music
+    this.load.audio('bgm', 'audio/bgm.m4a');
+
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
@@ -184,6 +191,11 @@ export default class BootScene extends Phaser.Scene {
   }
 
   create() {
+    // Register CRT Pipeline
+    if (this.renderer && this.renderer.pipelines) {
+      this.renderer.pipelines.addPostPipeline('CRTPipeline', CRTPipeline);
+    }
+
     this.createPlaceholderTextures();
     this.scene.start('MenuScene');
   }

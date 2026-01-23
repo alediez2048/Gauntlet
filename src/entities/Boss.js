@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import GameCycleManager from '../managers/GameCycleManager';
 
 export default class Boss extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
@@ -344,6 +345,10 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
         this.stateText.destroy();
         this.healthBar.destroy();
         this.emit('died');
+
+        // Corporate Gauntlet: Trigger Promotion Loop
+        new GameCycleManager(this.scene).triggerPromotion();
+
         this.destroy();
       }
     });
