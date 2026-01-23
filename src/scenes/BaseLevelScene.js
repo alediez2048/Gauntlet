@@ -100,6 +100,11 @@ export default class BaseLevelScene extends Phaser.Scene {
     this.levelComplete = false;
     this.levelTransitioning = false;
     this.transitioningToNextLevel = false;
+
+    // Pause system
+    this.isPaused = false;
+    this.pauseContainer = null;
+    this.setupPauseControls();
   }
 
   createPlatforms() {
@@ -702,7 +707,7 @@ export default class BaseLevelScene extends Phaser.Scene {
         keyHint = '[ Press L to activate ]';
         break;
       case 'training':
-        description = 'Startup hustle - 3x damage!';
+        description = 'Learn through repetition - 3x damage!';
         keyHint = '[ Press K for Power Strike ]';
         break;
       case 'optimization':
@@ -1183,6 +1188,328 @@ export default class BaseLevelScene extends Phaser.Scene {
     });
   }
 
+  // ========== PAUSE SYSTEM ==========
+
+  setupPauseControls() {
+    this.input.keyboard.on('keydown-ESC', () => this.togglePause());
+    this.input.keyboard.on('keydown-P', () => this.togglePause());
+  }
+
+  togglePause() {
+    if (this.levelComplete || this.levelTransitioning) return;
+
+    if (this.isPaused) {
+      this.resumeGame();
+    } else {
+      this.pauseGame();
+    }
+  }
+
+  pauseGame() {
+    this.isPaused = true;
+    this.physics.pause();
+    this.time.paused = true;
+
+    // Create pause overlay
+    this.createPauseMenu();
+  }
+
+  resumeGame() {
+    this.isPaused = false;
+    this.physics.resume();
+    this.time.paused = false;
+
+    // Destroy pause menu
+    if (this.pauseContainer) {
+      this.pauseContainer.destroy();
+      this.pauseContainer = null;
+    }
+  }
+
+  createPauseMenu() {
+    this.pauseContainer = this.add.container(0, 0).setScrollFactor(0).setDepth(5000);
+
+    // Dark overlay with scan effect
+    const overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.92);
+    this.pauseContainer.add(overlay);
+
+    // Scanning line animation
+    const scanLine = this.add.rectangle(400, 0, 800, 2, 0x00ff88, 0.6);
+    this.pauseContainer.add(scanLine);
+    this.tweens.add({
+      targets: scanLine,
+      y: 600,
+      duration: 2000,
+      repeat: -1
+    });
+
+    // PAUSED header with glitch effect
+    const pausedText = this.add.text(400, 40, '◆ SYSTEM PAUSED ◆', {
+      font: 'bold 28px monospace',
+      fill: '#00ff88',
+      stroke: '#003322',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    this.pauseContainer.add(pausedText);
+
+    // Glitch the pause text
+    this.time.addEvent({
+      delay: 100,
+      callback: () => {
+        if (this.isPaused && pausedText.active) {
+          pausedText.x = 400 + Phaser.Math.Between(-2, 2);
+        }
+      },
+      repeat: -1
+    });
+
+    // Draw the detailed gauntlet
+    this.drawDetailedGauntlet();
+
+    // Draw gem slots around gauntlet
+    this.drawGemSlots();
+
+    // Controls section
+    this.drawControlsSection();
+
+    // Resume instruction
+    const resumeText = this.add.text(400, 560, '[ Press ESC or P to Resume ]', {
+      font: '16px monospace',
+      fill: '#00ff88'
+    }).setOrigin(0.5);
+    this.pauseContainer.add(resumeText);
+
+    // Pulse resume text
+    this.tweens.add({
+      targets: resumeText,
+      alpha: 0.5,
+      duration: 800,
+      yoyo: true,
+      repeat: -1
+    });
+  }
+
+  drawDetailedGauntlet() {
+    const centerX = 400;
+    const centerY = 280;
+    const g = this.add.graphics();
+    this.pauseContainer.add(g);
+
+    // Gauntlet base glow
+    g.fillStyle(0xffaa00, 0.2);
+    g.fillCircle(centerX, centerY, 120);
+
+    // Main gauntlet body - forearm piece
+    g.fillStyle(0x444455, 1);
+    g.fillRoundedRect(centerX - 45, centerY - 80, 90, 160, 15);
+
+    // Metallic trim
+    g.fillStyle(0x666677, 1);
+    g.fillRoundedRect(centerX - 50, centerY - 85, 100, 20, 8);
+    g.fillRoundedRect(centerX - 50, centerY + 65, 100, 20, 8);
+
+    // Inner tech lines
+    g.lineStyle(2, 0x00ff88, 0.5);
+    for (let y = centerY - 60; y < centerY + 60; y += 20) {
+      g.lineBetween(centerX - 35, y, centerX + 35, y);
+    }
+
+    // Central power core
+    g.fillStyle(0x222233, 1);
+    g.fillCircle(centerX, centerY, 35);
+    g.lineStyle(3, 0xffaa00, 1);
+    g.strokeCircle(centerX, centerY, 35);
+
+    // Power core inner glow
+    g.fillStyle(0xffaa00, 0.6);
+    g.fillCircle(centerX, centerY, 20);
+    g.fillStyle(0xffffcc, 0.8);
+    g.fillCircle(centerX, centerY, 10);
+
+    // Gauntlet fingers (simplified)
+    const fingerPositions = [
+      { x: centerX - 30, y: centerY + 90 },
+      { x: centerX - 10, y: centerY + 95 },
+      { x: centerX + 10, y: centerY + 95 },
+      { x: centerX + 30, y: centerY + 90 }
+    ];
+
+    fingerPositions.forEach(pos => {
+      g.fillStyle(0x444455, 1);
+      g.fillRoundedRect(pos.x - 8, pos.y, 16, 30, 5);
+      g.fillStyle(0x555566, 1);
+      g.fillRoundedRect(pos.x - 6, pos.y + 2, 12, 8, 3);
+    });
+
+    // Thumb
+    g.fillStyle(0x444455, 1);
+    g.fillRoundedRect(centerX - 55, centerY + 40, 20, 35, 6);
+
+    // Tech details on gauntlet
+    g.fillStyle(0x00ff88, 0.3);
+    g.fillRect(centerX - 40, centerY - 70, 8, 40);
+    g.fillRect(centerX + 32, centerY - 70, 8, 40);
+
+    // "GAUNTLET" label
+    const label = this.add.text(centerX, centerY + 145, 'THE GAUNTLET', {
+      font: 'bold 14px monospace',
+      fill: '#ffaa00'
+    }).setOrigin(0.5);
+    this.pauseContainer.add(label);
+
+    // Subtitle
+    const subtitle = this.add.text(centerX, centerY + 165, 'PROTOTYPE MK-I', {
+      font: '10px monospace',
+      fill: '#666677'
+    }).setOrigin(0.5);
+    this.pauseContainer.add(subtitle);
+
+    // Animate the power core
+    const coreGlow = this.add.circle(centerX, centerY, 25, 0xffaa00, 0.4);
+    this.pauseContainer.add(coreGlow);
+    this.tweens.add({
+      targets: coreGlow,
+      scale: 1.3,
+      alpha: 0.1,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1
+    });
+  }
+
+  drawGemSlots() {
+    const centerX = 400;
+    const centerY = 280;
+
+    // Gem data with positions around the gauntlet
+    const gemData = [
+      { id: 'inference', name: 'INFERENCE', color: 0x00ffff, key: 'L', desc: 'See through deception', angle: -90, dist: 170 },
+      { id: 'training', name: 'TRAINING', color: 0xff00ff, key: 'K', desc: '3x DMG + Freeze nearby', angle: -30, dist: 180 },
+      { id: 'optimization', name: 'OPTIMIZATION', color: 0xffff00, key: 'SHIFT', desc: 'Dash through enemies', angle: 30, dist: 180 },
+      { id: 'generalization', name: 'GENERALIZATION', color: 0x00ff00, key: 'K', desc: 'Reflect projectiles', angle: 90, dist: 170 },
+      { id: 'alignment', name: 'ALIGNMENT', color: 0xff8800, key: 'K', desc: 'SUPER MODE', angle: 150, dist: 160 }
+    ];
+
+    const collectedGems = this.gemSystem ? this.gemSystem.getCollectedGems() : [];
+    const collectedIds = collectedGems.map(g => g.id);
+
+    gemData.forEach((gem, index) => {
+      const hasGem = collectedIds.includes(gem.id);
+      const angleRad = (gem.angle * Math.PI) / 180;
+      const x = centerX + Math.cos(angleRad) * gem.dist;
+      const y = centerY + Math.sin(angleRad) * gem.dist;
+
+      // Connection line to gauntlet
+      const lineG = this.add.graphics();
+      this.pauseContainer.add(lineG);
+      lineG.lineStyle(2, hasGem ? gem.color : 0x333344, hasGem ? 0.6 : 0.3);
+      lineG.lineBetween(centerX, centerY, x, y);
+
+      // Gem slot background
+      const slotBg = this.add.circle(x, y, 28, 0x111122, 1);
+      this.pauseContainer.add(slotBg);
+
+      if (hasGem) {
+        // Collected gem - glowing
+        const glow = this.add.circle(x, y, 35, gem.color, 0.3);
+        this.pauseContainer.add(glow);
+        this.tweens.add({
+          targets: glow,
+          scale: 1.2,
+          alpha: 0.1,
+          duration: 800,
+          yoyo: true,
+          repeat: -1,
+          delay: index * 100
+        });
+
+        // Gem core
+        const gemCore = this.add.circle(x, y, 20, gem.color, 1);
+        this.pauseContainer.add(gemCore);
+
+        // Gem shine
+        const shine = this.add.circle(x - 6, y - 6, 6, 0xffffff, 0.6);
+        this.pauseContainer.add(shine);
+
+        // Gem border
+        const border = this.add.circle(x, y, 22, gem.color, 0);
+        border.setStrokeStyle(3, gem.color, 1);
+        this.pauseContainer.add(border);
+
+        // Gem name
+        const nameText = this.add.text(x, y + 40, gem.name, {
+          font: 'bold 10px monospace',
+          fill: '#' + gem.color.toString(16).padStart(6, '0')
+        }).setOrigin(0.5);
+        this.pauseContainer.add(nameText);
+
+        // Key binding
+        const keyText = this.add.text(x, y + 55, `[ ${gem.key} ]`, {
+          font: '9px monospace',
+          fill: '#ffffff'
+        }).setOrigin(0.5);
+        this.pauseContainer.add(keyText);
+
+        // Description
+        const descText = this.add.text(x, y + 70, gem.desc, {
+          font: '8px monospace',
+          fill: '#888899'
+        }).setOrigin(0.5);
+        this.pauseContainer.add(descText);
+
+      } else {
+        // Locked gem slot
+        const lockIcon = this.add.text(x, y, '?', {
+          font: 'bold 24px monospace',
+          fill: '#333344'
+        }).setOrigin(0.5);
+        this.pauseContainer.add(lockIcon);
+
+        // Locked border
+        const border = this.add.circle(x, y, 22, 0x333344, 0);
+        border.setStrokeStyle(2, 0x333344, 0.5);
+        this.pauseContainer.add(border);
+
+        // Locked label
+        const lockedText = this.add.text(x, y + 40, 'LOCKED', {
+          font: '9px monospace',
+          fill: '#333344'
+        }).setOrigin(0.5);
+        this.pauseContainer.add(lockedText);
+      }
+    });
+
+    // Gem count display
+    const gemCount = this.add.text(400, 85, `GEMS: ${collectedIds.length} / 5`, {
+      font: 'bold 16px monospace',
+      fill: '#ffaa00'
+    }).setOrigin(0.5);
+    this.pauseContainer.add(gemCount);
+  }
+
+  drawControlsSection() {
+    const y = 480;
+
+    // Controls background
+    const controlsBg = this.add.rectangle(400, y, 700, 50, 0x111122, 0.8);
+    this.pauseContainer.add(controlsBg);
+
+    // Controls title
+    const title = this.add.text(400, y - 35, '─── CONTROLS ───', {
+      font: 'bold 11px monospace',
+      fill: '#00ff88'
+    }).setOrigin(0.5);
+    this.pauseContainer.add(title);
+
+    // Control mappings
+    const controls = this.add.text(400, y,
+      'A/D: Move    SPACE: Jump    J: Attack    K: Power    L: Vision    SHIFT: Dash    R: Respawn', {
+      font: '11px monospace',
+      fill: '#88aacc'
+    }).setOrigin(0.5);
+    this.pauseContainer.add(controls);
+  }
+
   handleAbilityUsed(gemId, gem) {
     switch (gemId) {
       case 'inference':
@@ -1190,6 +1517,7 @@ export default class BaseLevelScene extends Phaser.Scene {
         break;
       case 'training':
         this.player.activatePowerStrike();
+        this.freezeNearbyEnemies(150, 3000); // 150px range, 3 second freeze
         this.showAbilityMessage('POWER STRIKE!', 0xff00ff);
         break;
       case 'optimization':
@@ -1214,6 +1542,194 @@ export default class BaseLevelScene extends Phaser.Scene {
         this.deactivateInferenceVision();
         break;
     }
+  }
+
+  freezeNearbyEnemies(range, duration) {
+    const playerX = this.player.x;
+    const playerY = this.player.y;
+
+    this.enemies.getChildren().forEach(enemy => {
+      if (!enemy.isAlive || enemy.isFrozen) return;
+
+      const distance = Phaser.Math.Distance.Between(playerX, playerY, enemy.x, enemy.y);
+
+      if (distance <= range) {
+        // Freeze this enemy
+        enemy.isFrozen = true;
+        enemy.frozenVelocityX = enemy.body.velocity.x;
+        enemy.frozenVelocityY = enemy.body.velocity.y;
+        enemy.setVelocity(0, 0);
+        if (enemy.body) enemy.body.moves = false;
+
+        // Visual freeze effect - cyan tint and ice particles
+        enemy.setTint(0x88ffff);
+
+        // Create ice crystal effect around enemy
+        this.createFreezeEffect(enemy);
+
+        // "FROZEN" text
+        const frozenText = this.add.text(enemy.x, enemy.y - 40, 'FROZEN!', {
+          font: 'bold 12px monospace',
+          fill: '#88ffff',
+          stroke: '#003333',
+          strokeThickness: 2
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+          targets: frozenText,
+          y: frozenText.y - 20,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => frozenText.destroy()
+        });
+
+        // Unfreeze after duration
+        this.time.delayedCall(duration, () => {
+          if (enemy && enemy.active && enemy.isFrozen) {
+            enemy.isFrozen = false;
+            if (enemy.body) enemy.body.moves = true;
+            enemy.clearTint();
+
+            // Shatter effect when unfreezing
+            this.createUnfreezeEffect(enemy);
+          }
+        });
+      }
+    });
+
+    // Freeze shockwave visual from player
+    this.createFreezeShockwave(playerX, playerY, range);
+  }
+
+  createFreezeEffect(enemy) {
+    // Ice crystals forming around enemy
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const dist = 20 + Math.random() * 15;
+      const crystal = this.add.rectangle(
+        enemy.x + Math.cos(angle) * dist,
+        enemy.y + Math.sin(angle) * dist,
+        4 + Math.random() * 4,
+        8 + Math.random() * 8,
+        0x88ffff,
+        0.8
+      );
+      crystal.rotation = angle + Math.PI / 2;
+
+      this.tweens.add({
+        targets: crystal,
+        alpha: { from: 0, to: 0.8 },
+        scale: { from: 0, to: 1 },
+        duration: 200,
+        onComplete: () => {
+          // Sparkle effect
+          this.tweens.add({
+            targets: crystal,
+            alpha: { from: 0.8, to: 0.4 },
+            duration: 500,
+            yoyo: true,
+            repeat: -1
+          });
+        }
+      });
+
+      // Destroy crystals when enemy unfreezes
+      this.time.delayedCall(3000, () => {
+        if (crystal.active) {
+          this.tweens.add({
+            targets: crystal,
+            alpha: 0,
+            scale: 0,
+            duration: 200,
+            onComplete: () => crystal.destroy()
+          });
+        }
+      });
+    }
+
+    // Frost breath particles
+    for (let i = 0; i < 8; i++) {
+      const particle = this.add.circle(
+        enemy.x + Phaser.Math.Between(-20, 20),
+        enemy.y + Phaser.Math.Between(-30, 10),
+        Phaser.Math.Between(2, 5),
+        0xaaffff,
+        0.7
+      );
+
+      this.tweens.add({
+        targets: particle,
+        y: particle.y - 30,
+        alpha: 0,
+        duration: 600,
+        delay: i * 50,
+        onComplete: () => particle.destroy()
+      });
+    }
+  }
+
+  createUnfreezeEffect(enemy) {
+    // Ice shattering effect
+    for (let i = 0; i < 10; i++) {
+      const shard = this.add.rectangle(
+        enemy.x + Phaser.Math.Between(-15, 15),
+        enemy.y + Phaser.Math.Between(-20, 20),
+        Phaser.Math.Between(3, 8),
+        Phaser.Math.Between(3, 8),
+        0x88ffff,
+        0.9
+      );
+      shard.rotation = Math.random() * Math.PI;
+
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 30 + Math.random() * 50;
+
+      this.tweens.add({
+        targets: shard,
+        x: shard.x + Math.cos(angle) * speed,
+        y: shard.y + Math.sin(angle) * speed + 20,
+        rotation: shard.rotation + Math.PI * 2,
+        alpha: 0,
+        duration: 400,
+        onComplete: () => shard.destroy()
+      });
+    }
+  }
+
+  createFreezeShockwave(x, y, range) {
+    // Expanding freeze ring
+    const ring = this.add.circle(x, y, 10, 0x88ffff, 0);
+    ring.setStrokeStyle(4, 0x88ffff, 0.8);
+
+    this.tweens.add({
+      targets: ring,
+      scale: range / 10,
+      alpha: 0,
+      duration: 300,
+      ease: 'Power2',
+      onComplete: () => ring.destroy()
+    });
+
+    // Ice particles expanding outward
+    for (let i = 0; i < 16; i++) {
+      const angle = (i / 16) * Math.PI * 2;
+      const particle = this.add.rectangle(
+        x, y, 6, 3, 0xaaffff, 0.8
+      );
+      particle.rotation = angle;
+
+      this.tweens.add({
+        targets: particle,
+        x: x + Math.cos(angle) * range,
+        y: y + Math.sin(angle) * range,
+        alpha: 0,
+        duration: 300,
+        onComplete: () => particle.destroy()
+      });
+    }
+
+    // Screen flash
+    this.cameras.main.flash(100, 136, 255, 255);
   }
 
   showAbilityMessage(text, color) {

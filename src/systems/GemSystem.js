@@ -4,7 +4,7 @@ import Phaser from 'phaser';
 export const GEM_TYPES = {
   INFERENCE: {
     id: 'inference',
-    name: 'Clarity Gem',
+    name: 'Inference Gem',
     color: 0x00ffff,
     description: 'Press L: See through corporate BS',
     abilityKey: 'L',
@@ -15,14 +15,14 @@ export const GEM_TYPES = {
   },
   TRAINING: {
     id: 'training',
-    name: 'Hustle Gem',
+    name: 'Training Gem',
     color: 0xff00ff,
-    description: 'Press K: Startup Energy - 3x impact',
+    description: 'Press K: Power Strike - 3x damage',
     abilityKey: 'K',
     cooldown: 4000,
     duration: 500,
     passive: false,
-    hint: 'The drive to build something meaningful'
+    hint: 'Learn through repetition - each hit strengthens the next'
   },
   OPTIMIZATION: {
     id: 'optimization',

@@ -9,6 +9,11 @@ export default class MenuScene extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
+    // Start background music if not already playing
+    if (!this.sound.get('bgm')) {
+      this.sound.play('bgm', { loop: true, volume: 0.4 });
+    }
+
     // Scene fade in
     this.cameras.main.fadeIn(1000, 0, 0, 0);
 
@@ -340,19 +345,29 @@ export default class MenuScene extends Phaser.Scene {
       fill: '#888899'
     }).setOrigin(0.5).setAlpha(0).setInteractive({ useHandCursor: true });
 
-    // Controls hint
-    const controls = this.add.text(width / 2, height - 50,
-      'A/D: Move | SPACE: Jump | J: Attack | L: Gem Power', {
-      font: '11px monospace',
-      fill: '#445566'
+    // Controls panel - more prominent
+    const controlsBg = this.add.rectangle(width / 2, height - 45, 500, 60, 0x000000, 0.7)
+      .setAlpha(0);
+
+    const controlsTitle = this.add.text(width / 2, height - 65, '─── CONTROLS ───', {
+      font: 'bold 12px monospace',
+      fill: '#00ff88'
+    }).setOrigin(0.5).setAlpha(0);
+
+    const controls = this.add.text(width / 2, height - 45,
+      'A/D: Move   SPACE: Jump   J: Attack\nK: Power Strike   L: Vision   SHIFT: Dash   R: Respawn', {
+      font: '12px monospace',
+      fill: '#88aacc',
+      align: 'center',
+      lineSpacing: 4
     }).setOrigin(0.5).setAlpha(0);
 
     // Fade in menu
     this.tweens.add({
-      targets: [playButton, arenaButton, controls],
+      targets: [playButton, arenaButton, controlsBg, controlsTitle, controls],
       alpha: 1,
       duration: 500,
-      delay: this.tweens.stagger(200)
+      delay: this.tweens.stagger(150)
     });
 
     // Button interactions

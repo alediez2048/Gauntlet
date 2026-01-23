@@ -230,6 +230,11 @@ export default class DroneZombie extends Phaser.Physics.Arcade.Sprite {
     // Corporate death message floating up
     this.showDeathMessage();
 
+    // Chance to drop a heart (40% chance)
+    if (Math.random() < 0.4 && this.scene.spawnHeartPickup) {
+      this.scene.spawnHeartPickup(this.x, this.y);
+    }
+
     // Death animation
     this.scene.tweens.add({
       targets: this,
