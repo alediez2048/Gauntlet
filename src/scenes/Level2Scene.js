@@ -10,11 +10,14 @@ export default class Level2Scene extends BaseLevelScene {
   create() {
     super.create();
 
-    // Level 2 specific: Track middle manager kills with Training gem
-    this.managerKillsWithPower = 0;
-    this.totalManagers = this.countMiddleManagers();
+    // Level 2 specific: Track middle manager deaths
+    this.managersKilled = 0;
+    this.totalManagers = 0;
     this.hasKeycard = false;
     this.keycardCollected = false;
+
+    // Count and track all middle managers
+    this.setupManagerTracking();
 
     // Create locked exit barrier
     this.createExitBarrier();
@@ -23,24 +26,92 @@ export default class Level2Scene extends BaseLevelScene {
     this.exitLabel.setText('EXIT\n[LOCKED]');
     this.exitLabel.setColor('#ff4444');
 
+    // Create manager kill HUD
+    this.createManagerHUD();
+
     // Show level objective
     this.showLevelObjective();
   }
 
-  countMiddleManagers() {
-    let count = 0;
+  setupManagerTracking() {
+    // Find all middle managers and attach death listeners
     this.enemies.getChildren().forEach(enemy => {
       if (enemy instanceof MiddleManager) {
-        count++;
+        this.totalManagers++;
+
+        // Store original die method
+        const originalDie = enemy.die.bind(enemy);
+
+        // Override die method to track kills
+        enemy.die = () => {
+          // Call original die first
+          originalDie();
+
+          // Then track the kill
+          this.onManagerKilled(enemy);
+        };
       }
     });
-    return count;
+
+    console.log(`Level 2: Tracking ${this.totalManagers} Middle Managers`);
+  }
+
+  onManagerKilled(manager) {
+    this.managersKilled++;
+    console.log(`Manager killed! ${this.managersKilled}/${this.totalManagers}`);
+
+    // Update HUD
+    this.updateManagerHUD();
+
+    // Show kill effect
+    this.showManagerKillEffect(manager.x, manager.y);
+
+    // Check if all managers are dead
+    if (this.managersKilled >= this.totalManagers && !this.hasKeycard) {
+      this.hasKeycard = true;
+      // Small delay for dramatic effect
+      this.time.delayedCall(500, () => {
+        this.spawnKeycard();
+      });
+    }
+  }
+
+  createManagerHUD() {
+    this.managerHUD = this.add.container(700, 60).setScrollFactor(0).setDepth(1000);
+
+    const bg = this.add.rectangle(0, 0, 180, 40, 0x000000, 0.7);
+    this.managerHUD.add(bg);
+
+    const icon = this.add.text(-65, 0, 'MGR', {
+      font: 'bold 12px monospace',
+      fill: '#ff00ff'
+    }).setOrigin(0.5);
+    this.managerHUD.add(icon);
+
+    this.managerHUDText = this.add.text(15, 0, `DEFEATED: ${this.managersKilled}/${this.totalManagers}`, {
+      font: '12px monospace',
+      fill: '#ff00ff'
+    }).setOrigin(0.5);
+    this.managerHUD.add(this.managerHUDText);
+  }
+
+  updateManagerHUD() {
+    if (this.managerHUDText) {
+      this.managerHUDText.setText(`DEFEATED: ${this.managersKilled}/${this.totalManagers}`);
+
+      // Pulse effect
+      this.tweens.add({
+        targets: this.managerHUDText,
+        scale: 1.3,
+        duration: 100,
+        yoyo: true
+      });
+    }
   }
 
   createExitBarrier() {
     const pos = this.config.exitPosition;
 
-    // Barrier blocking the exit
     this.exitBarrier = this.add.container(pos.x, pos.y);
 
     // Red security barrier
@@ -80,12 +151,11 @@ export default class Level2Scene extends BaseLevelScene {
   }
 
   showLevelObjective() {
-    // Show objective after level title fades
     this.time.delayedCall(4000, () => {
       const objective = this.add.text(
         this.cameras.main.scrollX + 400,
         150,
-        'OBJECTIVE: Eliminate all Middle Managers\nusing Training Power (K) to obtain keycard',
+        `OBJECTIVE: Defeat all ${this.totalManagers} Middle Managers\nto obtain the keycard`,
         {
           font: '14px monospace',
           fill: '#ff00ff',
@@ -105,114 +175,50 @@ export default class Level2Scene extends BaseLevelScene {
     });
   }
 
-  // Override attack hit to track manager kills with power
-  handleAttackHit(attackHitbox, enemy) {
-    if (!this.player.isAttacking || !enemy.isAlive) return;
+  showManagerKillEffect(x, y) {
+    // Success text
+    const successText = this.add.text(x, y - 30, `MANAGER DOWN! (${this.managersKilled}/${this.totalManagers})`, {
+      font: 'bold 14px monospace',
+      fill: '#ff00ff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
 
-    const wasAlive = enemy.isAlive;
-    const isManager = enemy instanceof MiddleManager;
-    const isPowerActive = this.player.isPowerStriking;
-
-    // Deal damage directly (same as parent logic)
-    const knockbackDir = enemy.x > this.player.x ? 1 : -1;
-    let damage = this.player.attackDamage;
-
-    // Training gem bonus damage from hit streak
-    if (this.gemSystem.hasGem('training') && this.player.hitStreak) {
-      damage += Math.min(this.player.hitStreak * 0.1, 0.5);
-    }
-
-    // Apply damage to enemy
-    enemy.takeDamage(damage, knockbackDir);
-
-    // Increment hit streak for training gem
-    if (this.gemSystem.hasGem('training')) {
-      this.player.hitStreak = (this.player.hitStreak || 0) + 1;
-      if (this.updateTrainingDisplay) {
-        this.updateTrainingDisplay();
-      }
-    }
-
-    // Check if this kill was a manager killed with power strike
-    if (wasAlive && !enemy.isAlive && isManager) {
-      if (isPowerActive) {
-        this.managerKillsWithPower++;
-        this.showManagerKillEffect(enemy.x, enemy.y, true);
-        this.checkKeycardDrop();
-      } else {
-        // Killed without power - show hint
-        this.showManagerKillEffect(enemy.x, enemy.y, false);
-      }
-    }
-  }
-
-  showManagerKillEffect(x, y, withPower) {
-    if (withPower) {
-      // Success - killed with power
-      const successText = this.add.text(x, y - 30, `TRAINED! (${this.managerKillsWithPower}/${this.totalManagers})`, {
-        font: 'bold 14px monospace',
-        fill: '#ff00ff',
-        stroke: '#000000',
-        strokeThickness: 3
-      }).setOrigin(0.5);
-
-      // Magenta particles
-      for (let i = 0; i < 15; i++) {
-        const particle = this.add.circle(
-          x + Phaser.Math.Between(-20, 20),
-          y + Phaser.Math.Between(-20, 20),
-          Phaser.Math.Between(3, 6),
-          0xff00ff, 1
-        );
-
-        this.tweens.add({
-          targets: particle,
-          y: particle.y - 50,
-          alpha: 0,
-          duration: 600,
-          onComplete: () => particle.destroy()
-        });
-      }
+    // Magenta particles
+    for (let i = 0; i < 15; i++) {
+      const particle = this.add.circle(
+        x + Phaser.Math.Between(-20, 20),
+        y + Phaser.Math.Between(-20, 20),
+        Phaser.Math.Between(3, 6),
+        0xff00ff, 1
+      );
 
       this.tweens.add({
-        targets: successText,
-        y: y - 60,
+        targets: particle,
+        y: particle.y - 50,
         alpha: 0,
-        duration: 1000,
-        onComplete: () => successText.destroy()
-      });
-
-      this.cameras.main.flash(100, 255, 0, 255);
-    } else {
-      // Failed - killed without power
-      const hintText = this.add.text(x, y - 30, 'Use Power Strike (K)!', {
-        font: '12px monospace',
-        fill: '#ffaa00',
-        stroke: '#000000',
-        strokeThickness: 2
-      }).setOrigin(0.5);
-
-      this.tweens.add({
-        targets: hintText,
-        y: y - 50,
-        alpha: 0,
-        duration: 1500,
-        onComplete: () => hintText.destroy()
+        duration: 600,
+        onComplete: () => particle.destroy()
       });
     }
-  }
 
-  checkKeycardDrop() {
-    if (this.managerKillsWithPower >= this.totalManagers && !this.hasKeycard) {
-      this.hasKeycard = true;
-      this.spawnKeycard();
-    }
+    this.tweens.add({
+      targets: successText,
+      y: y - 60,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => successText.destroy()
+    });
+
+    this.cameras.main.flash(100, 255, 0, 255);
   }
 
   spawnKeycard() {
-    // Spawn keycard at the last manager's location or center of level
+    // Spawn keycard near player
     const keycardX = this.player.x;
     const keycardY = this.player.y - 50;
+
+    console.log('Spawning keycard at', keycardX, keycardY);
 
     // Epic keycard drop effect
     this.cameras.main.shake(300, 0.02);
@@ -222,7 +228,7 @@ export default class Level2Scene extends BaseLevelScene {
     const announcement = this.add.text(
       this.cameras.main.scrollX + 400,
       200,
-      'ALL MANAGERS TRAINED!\n\nKEYCARD DROPPED!',
+      'ALL MANAGERS DEFEATED!\n\nKEYCARD DROPPED!',
       {
         font: 'bold 24px monospace',
         fill: '#ff00ff',
@@ -308,6 +314,8 @@ export default class Level2Scene extends BaseLevelScene {
     if (this.keycardCollected) return;
     this.keycardCollected = true;
 
+    console.log('Keycard collected!');
+
     // Collection effect
     this.cameras.main.flash(200, 255, 0, 255);
 
@@ -377,11 +385,9 @@ export default class Level2Scene extends BaseLevelScene {
         this.exitHintShown = true;
 
         let hintMsg = 'Exit is locked!';
-        if (!this.gemSystem.hasGem('training')) {
-          hintMsg = 'Find the Training Gem first!';
-        } else if (this.managerKillsWithPower < this.totalManagers) {
-          hintMsg = `Defeat managers with Power Strike!\n(${this.managerKillsWithPower}/${this.totalManagers})`;
-        } else {
+        if (this.managersKilled < this.totalManagers) {
+          hintMsg = `Defeat all managers!\n(${this.managersKilled}/${this.totalManagers})`;
+        } else if (!this.keycardCollected) {
           hintMsg = 'Collect the keycard!';
         }
 
@@ -408,18 +414,16 @@ export default class Level2Scene extends BaseLevelScene {
       return;
     }
 
-    // Keycard collected - allow exit (don't set levelComplete here, handleLevelComplete does it)
+    // Keycard collected - allow exit
     this.handleLevelComplete();
   }
 
   // Override respawn to reset Level 2 specific states
   respawnPlayer() {
-    // Call parent respawn first
     super.respawnPlayer();
 
     // Reset Level 2 specific states
-    this.managerKillsWithPower = 0;
-    this.totalManagers = this.countMiddleManagers();
+    this.managersKilled = 0;
     this.hasKeycard = false;
     this.keycardCollected = false;
     this.exitHintShown = false;
@@ -429,6 +433,13 @@ export default class Level2Scene extends BaseLevelScene {
       this.keycard.destroy();
       this.keycard = null;
     }
+
+    // Recount managers (they respawn via parent)
+    this.totalManagers = 0;
+    this.setupManagerTracking();
+
+    // Update HUD
+    this.updateManagerHUD();
 
     // Destroy existing barrier and recreate
     if (this.exitBarrier) {
