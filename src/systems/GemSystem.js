@@ -26,14 +26,14 @@ export const GEM_TYPES = {
   },
   OPTIMIZATION: {
     id: 'optimization',
-    name: 'Agility Gem',
+    name: 'Latency Gem',
     color: 0xffff00,
-    description: 'Press SHIFT: Move fast, break things',
+    description: 'Press SHIFT: Ultra-fast dash',
     abilityKey: 'SHIFT',
     cooldown: 2000,
     duration: 200,
     passive: false,
-    hint: 'Dodge red tape and bureaucracy'
+    hint: 'Reduce latency - move faster than the system'
   },
   GENERALIZATION: {
     id: 'generalization',
