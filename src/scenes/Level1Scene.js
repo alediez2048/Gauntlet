@@ -222,7 +222,7 @@ export default class Level1Scene extends Phaser.Scene {
       { id: 'inference', name: 'INFERENCE', color: 0x00ffff, key: 'L', desc: 'See through deception', angle: -90, dist: 170 },
       { id: 'training', name: 'TRAINING', color: 0xff00ff, key: 'K', desc: '3x DMG + Freeze nearby', angle: -30, dist: 180 },
       { id: 'optimization', name: 'LATENCY', color: 0xffff00, key: 'SHIFT', desc: 'Ultra-fast dash', angle: 30, dist: 180 },
-      { id: 'generalization', name: 'GENERALIZATION', color: 0x00ff00, key: 'K', desc: 'Reflect projectiles', angle: 90, dist: 170 },
+      { id: 'generalization', name: 'RESILIENCE', color: 0x00ff00, key: 'I', desc: 'Reflect projectiles', angle: 90, dist: 170 },
       { id: 'alignment', name: 'ALIGNMENT', color: 0xff8800, key: 'K', desc: 'SUPER MODE', angle: 150, dist: 160 }
     ];
 
@@ -299,7 +299,7 @@ export default class Level1Scene extends Phaser.Scene {
     this.pauseContainer.add(title);
 
     const controls = this.add.text(400, y,
-      'A/D: Move    SPACE: Jump    J: Attack    K: Power    L: Vision    SHIFT: Dash    R: Respawn', {
+      'A/D: Move   SPACE: Jump   J: Attack   K: Power   L: Vision   I: Shield   SHIFT: Dash', {
       font: '11px monospace', fill: '#88aacc'
     }).setOrigin(0.5);
     this.pauseContainer.add(controls);

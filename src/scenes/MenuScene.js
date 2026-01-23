@@ -355,7 +355,7 @@ export default class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0);
 
     const controls = this.add.text(width / 2, height - 45,
-      'A/D: Move   SPACE: Jump   J: Attack\nK: Power Strike   L: Vision   SHIFT: Dash   R: Respawn', {
+      'A/D: Move   SPACE: Jump   J: Attack\nK: Power   L: Vision   I: Shield   SHIFT: Dash', {
       font: '12px monospace',
       fill: '#88aacc',
       align: 'center',
