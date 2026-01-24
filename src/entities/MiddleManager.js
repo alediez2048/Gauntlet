@@ -513,4 +513,26 @@ export default class MiddleManager extends Phaser.Physics.Arcade.Sprite {
   isTelegraphingAttack() {
     return this.isTelegraphing;
   }
+
+  // Clean up UI elements before destruction
+  cleanup() {
+    if (this.stateIndicator) {
+      this.stateIndicator.destroy();
+      this.stateIndicator = null;
+    }
+    if (this.aimLine) {
+      this.aimLine.destroy();
+      this.aimLine = null;
+    }
+    if (this.freezeTimer) {
+      this.freezeTimer.destroy();
+      this.freezeTimer = null;
+    }
+  }
+
+  // Override destroy to ensure cleanup
+  destroy(fromScene) {
+    this.cleanup();
+    super.destroy(fromScene);
+  }
 }

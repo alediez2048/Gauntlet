@@ -379,4 +379,18 @@ export default class DroneZombie extends Phaser.Physics.Arcade.Sprite {
   isTelegraphingAttack() {
     return this.isTelegraphing;
   }
+
+  // Clean up UI elements before destruction
+  cleanup() {
+    if (this.stateIndicator) {
+      this.stateIndicator.destroy();
+      this.stateIndicator = null;
+    }
+  }
+
+  // Override destroy to ensure cleanup
+  destroy(fromScene) {
+    this.cleanup();
+    super.destroy(fromScene);
+  }
 }

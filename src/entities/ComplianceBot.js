@@ -460,4 +460,30 @@ export default class ComplianceBot extends Phaser.Physics.Arcade.Sprite {
   isTelegraphingAttack() {
     return this.isTelegraphing;
   }
+
+  // Clean up UI elements before destruction
+  cleanup() {
+    if (this.stateIndicator) {
+      this.stateIndicator.destroy();
+      this.stateIndicator = null;
+    }
+    if (this.healthBar) {
+      this.healthBar.destroy();
+      this.healthBar = null;
+    }
+    if (this.dangerZone) {
+      this.dangerZone.destroy();
+      this.dangerZone = null;
+    }
+    if (this.shockwave) {
+      this.shockwave.destroy();
+      this.shockwave = null;
+    }
+  }
+
+  // Override destroy to ensure cleanup
+  destroy(fromScene) {
+    this.cleanup();
+    super.destroy(fromScene);
+  }
 }

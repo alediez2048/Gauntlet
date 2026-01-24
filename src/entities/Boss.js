@@ -392,4 +392,33 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
     };
     this.stateText.setText(labels[this.state] || this.state.toUpperCase());
   }
+
+  // Clean up UI elements before destruction
+  cleanup() {
+    if (this.nameText) {
+      this.nameText.destroy();
+      this.nameText = null;
+    }
+    if (this.stateText) {
+      this.stateText.destroy();
+      this.stateText = null;
+    }
+    if (this.healthBar) {
+      this.healthBar.destroy();
+      this.healthBar = null;
+    }
+    if (this.patternTimer) {
+      this.patternTimer.remove();
+      this.patternTimer = null;
+    }
+    if (this.projectiles) {
+      this.projectiles.clear(true, true);
+    }
+  }
+
+  // Override destroy to ensure cleanup
+  destroy(fromScene) {
+    this.cleanup();
+    super.destroy(fromScene);
+  }
 }
