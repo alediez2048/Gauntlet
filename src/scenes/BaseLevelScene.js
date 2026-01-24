@@ -64,6 +64,11 @@ export default class BaseLevelScene extends Phaser.Scene {
       this.player.equipGauntlet();
     }
 
+    // Check if player already has Inference gem (from previous level) - enable double jump
+    if (this.gemSystem.hasGem('inference')) {
+      this.player.canDoubleJump = true;
+    }
+
     // Camera
     this.cameras.main.setBounds(0, 0, width, height);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
@@ -703,8 +708,10 @@ export default class BaseLevelScene extends Phaser.Scene {
     let keyHint = '';
     switch (gemType.id) {
       case 'inference':
-        description = 'See through corporate BS!';
-        keyHint = '[ Press L to activate ]';
+        // Enable double jump ability
+        this.player.canDoubleJump = true;
+        description = 'DOUBLE JUMP unlocked! See through corporate BS!';
+        keyHint = '[ SPACE in air | L to see through ]';
         break;
       case 'training':
         description = 'Learn through repetition - 3x damage!';

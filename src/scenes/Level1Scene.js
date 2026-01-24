@@ -790,13 +790,16 @@ export default class Level1Scene extends Phaser.Scene {
   }
 
   handleGemCollected(gemType) {
+    // Enable double jump ability from the Inference Gem
+    this.player.canDoubleJump = true;
+
     // Show collection message
     const text = this.add.text(
       this.cameras.main.scrollX + 400,
       200,
-      `${gemType.name} Acquired!\n\nPress L to activate Inference Vision\nand breach the exit firewall!`,
+      `${gemType.name} Acquired!\n\nDOUBLE JUMP unlocked! (SPACE in air)\nPress L to activate Inference Vision\nand breach the exit firewall!`,
       {
-        font: '20px monospace',
+        font: '18px monospace',
         fill: '#00ffff',
         align: 'center',
         backgroundColor: '#000000aa',
