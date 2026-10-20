@@ -1,143 +1,62 @@
 # Gauntlet
 
-**Play now:** https://alediez2048.github.io/Gauntlet/
+**Play it:** https://alediez2048.github.io/Gauntlet/ (desktop browser, keyboard)
 
-A Metroidvania Work Sample for the Gauntlet Program
+A 2D action platformer I built in five days (January 19 to 23, 2026) as a work sample for the Gauntlet AI program. You play an office worker escaping a decaying megacorp across five levels, collecting a gem in each one that unlocks a new ability. The theme is a joke about corporate life; the engineering point is the enemy AI.
 
-## Overview
+## Controls
 
-Corporate Gauntlet is a small, intentionally scoped Metroidvania-style game built as a technical and creative work sample for the Gauntlet Program, a 2.5-month intensive AI training bootcamp.
+| Key | Action |
+| --- | --- |
+| A / D or arrow keys | Move |
+| Space or Up | Jump |
+| J | Attack |
+| L | Inference gem: reveal hidden threats |
+| K | Training gem: power strike (3x damage, freezes nearby enemies) |
+| Shift | Latency gem: dash |
+| I | Resilience gem: deflect |
+| Esc or P | Pause |
 
-The goal is not to ship a massive game. The goal is to demonstrate:
+## Levels
 
-- Strong product thinking
-- Tasteful technical choices
-- Ability to integrate AI concepts meaningfully, not as gimmicks
-- Clear scope control and execution discipline
+1. Escape the Cubicle
+2. Survive the Breakroom
+3. Navigate the Red Tape
+4. Outrun HR
+5. Defeat the CEO (boss fight)
 
-The game is designed to run entirely in the browser and be hosted via GitHub Pages.
+## How the enemy AI works
 
-## Core Concept
+Enemies don't follow fixed scripts. `src/systems/AIController.js` keeps a rolling five-second profile of how you play: aggression, how often you jump and attack, how unpredictable your movement is, and how far you keep your distance. Each enemy scores its possible actions against that profile (utility-based decision making) and picks the best one, so a player who rushes gets punished differently from one who keeps their distance. Enemies telegraph attacks before they land, which gives a skilled player a window to react.
 
-You play as a corporate drone who wakes up from a long slumber inside a decaying megacorp.
-The office is abandoned. The systems still run.
-Former employees now roam as corporate drone zombies, trapped in endless loops.
+## Tech
 
-Your only tool is a **Gauntlet**—a modular device that evolves as you progress.
+- Phaser 3 and plain JavaScript, bundled with Vite
+- A custom CRT post-processing shader (`src/pipelines/CRTPipeline.js`)
+- Sound effects synthesized at runtime with the Web Audio API (`src/managers/SoundSynth.js`), so there are no sound files beyond the music track
+- Deployed to GitHub Pages by GitHub Actions on every push
 
-Each level awards a **Gemstone**, representing a core AI concept.
-Each gemstone unlocks a new mechanic that meaningfully changes gameplay.
+## Project layout
 
-This is a Metroidvania: progression is gated by capability, not keys.
+```
+src/
+  scenes/     one scene per level, plus boot, menu and a shared BaseLevelScene
+  entities/   player, enemy types and the boss
+  systems/    AIController (enemy decisions) and GemSystem (abilities)
+  managers/   dialogue, game cycle, sound synthesis
+  data/       level configuration
+docs/original-design.md   the design document written before the build
+```
 
-## Technical Stack (Lean by Design)
+## Run locally
 
-| Component | Choice | Rationale |
-|-----------|--------|-----------|
-| Framework | Phaser 3 | Lightweight, mature ecosystem, ideal for 2D keyboard-driven games, easy GitHub Pages deployment |
-| Language | JavaScript (ES6+) | |
-| Hosting | GitHub Pages | |
-| AI Integration | Client-side lightweight models + rule-based systems | Optional serverless inference (Phase 2) |
+```bash
+npm install
+npm run dev
+```
 
-This stack is chosen deliberately:
+## Known limitations
 
-- No engine bloat
-- No unnecessary abstractions
-- Fast iteration
-- Reviewers can inspect everything directly in GitHub
-
-## Game Structure
-
-- **Genre:** Metroidvania / Castlevania-inspired 2D action platformer
-- **Perspective:** Side-scrolling
-- **Levels:** 5 handcrafted levels
-- **Session Length:** ~10–15 minutes total
-
-## Levels & AI-Themed Progression
-
-Each level introduces one AI concept, translated into a mechanical ability.
-
-### Level 1 — Inference Gem
-
-**Theme:** Pattern recognition, prediction
-
-**Mechanic Unlocked:**
-- Enemies telegraph attacks with subtle patterns
-- Player gains a short "prediction window" that highlights likely enemy actions
-
-**Design Intent:**
-- Teach the player to read patterns
-- Mirror how inference works: limited data → probable outcome
-
-### Level 2 — Training Gem
-
-**Theme:** Learning through repetition
-
-**Mechanic Unlocked:**
-- Gauntlet attacks improve based on repeated usage
-- Misses vs hits affect effectiveness
-
-**Design Intent:**
-- The player trains their weapon through behavior
-- Reinforces feedback loops
-
-### Level 3 — Optimization Gem
-
-**Theme:** Efficiency and cost functions
-
-**Mechanic Unlocked:**
-- Stamina/energy system introduced
-- Optimized attack paths deal more damage for less cost
-
-**Design Intent:**
-- Force tradeoffs
-- Reward efficient play over brute force
-
-### Level 4 — Generalization Gem
-
-**Theme:** Transfer learning
-
-**Mechanic Unlocked:**
-- Abilities learned earlier adapt to new enemy types
-- Player can "rebind" gems for different effects
-
-**Design Intent:**
-- Skills shouldn't only work in one context
-- Poor generalization is punished
-
-### Level 5 — Alignment Gem
-
-**Theme:** Objective alignment & unintended consequences
-
-**Mechanic Unlocked:**
-- Player choices alter enemy behavior globally
-- Overpowered builds cause systemic instability
-
-**Design Intent:**
-- The strongest build is not always the safest
-- Mirrors real-world AI alignment problems
-
-## AI Component (Non-Gimmicky)
-
-This project intentionally avoids "LLM-in-a-box" nonsense.
-
-### Phase 1 (Core Sample)
-
-Enemy behavior driven by:
-- Lightweight decision trees
-- Utility-based scoring
-- Player behavior tracking
-
-Dynamic difficulty adjustment based on player style.
-
-### Phase 2 (Stretch)
-
-Optional small ML model (e.g. TensorFlow.js)
-
-Model observes:
-- Player aggression
-- Movement patterns
-
-Enemies adapt mid-run.
-
-**The AI exists to change gameplay, not to generate text.**
+- Desktop and keyboard only; there are no touch controls.
+- `BaseLevelScene.js` and `Level1Scene.js` are large and would be the first things to split up.
+- The design document describes an optional machine learning stage for enemy behavior. It was never built; the shipped AI is the utility-based system described above.
