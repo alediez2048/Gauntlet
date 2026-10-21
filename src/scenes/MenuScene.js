@@ -339,12 +339,6 @@ export default class MenuScene extends Phaser.Scene {
       strokeThickness: 2
     }).setOrigin(0.5).setAlpha(0).setInteractive({ useHandCursor: true });
 
-    // Arena mode button
-    const arenaButton = this.add.text(width / 2, height - 100, '[ COMBAT TRAINING ]', {
-      font: '16px monospace',
-      fill: '#888899'
-    }).setOrigin(0.5).setAlpha(0).setInteractive({ useHandCursor: true });
-
     // Controls panel - more prominent
     const controlsBg = this.add.rectangle(width / 2, height - 45, 500, 60, 0x000000, 0.7)
       .setAlpha(0);
@@ -364,7 +358,7 @@ export default class MenuScene extends Phaser.Scene {
 
     // Fade in menu
     this.tweens.add({
-      targets: [playButton, arenaButton, controlsBg, controlsTitle, controls],
+      targets: [playButton, controlsBg, controlsTitle, controls],
       alpha: 1,
       duration: 500,
       delay: this.tweens.stagger(150)
@@ -391,18 +385,6 @@ export default class MenuScene extends Phaser.Scene {
 
     playButton.on('pointerdown', () => {
       this.startGame();
-    });
-
-    arenaButton.on('pointerover', () => {
-      arenaButton.setStyle({ fill: '#aabbcc' });
-    });
-
-    arenaButton.on('pointerout', () => {
-      arenaButton.setStyle({ fill: '#888899' });
-    });
-
-    arenaButton.on('pointerdown', () => {
-      this.startArena();
     });
 
     // Keyboard shortcuts
@@ -441,12 +423,6 @@ export default class MenuScene extends Phaser.Scene {
     // Dramatic glitch transition
     this.createTransitionEffect(() => {
       this.scene.start('Level1Scene');
-    });
-  }
-
-  startArena() {
-    this.createTransitionEffect(() => {
-      this.scene.start('ArenaScene');
     });
   }
 
