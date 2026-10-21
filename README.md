@@ -34,6 +34,7 @@ Enemies don't follow fixed scripts. `src/systems/AIController.js` keeps a rollin
 - Phaser 3 and plain JavaScript, bundled with Vite
 - A custom CRT post-processing shader (`src/pipelines/CRTPipeline.js`)
 - Sound effects synthesized at runtime with the Web Audio API (`src/managers/SoundSynth.js`), so there are no sound files beyond the music track
+- Background music (`public/audio/bgm.m4a`): original track made for this game by the author with AI music tools
 - Deployed to GitHub Pages by GitHub Actions on every push
 
 ## Project layout
